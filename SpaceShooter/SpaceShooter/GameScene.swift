@@ -29,6 +29,7 @@ class GameScene: SKScene {
         playerNode.color = .orange
         self.addChild(playerNode)
         fireProjectiles()
+        launchEnemy()
     }
 
     
@@ -70,4 +71,38 @@ class GameScene: SKScene {
     override func update(_ currentTime: TimeInterval) {
         // Called before each frame is rendered
     }
+    
+    // Enemy
+    fileprivate func launchEnemy() {
+        let spawnEnemy = SKAction.run {
+            self.spawnEnemy()
+        }
+    
+        let wait = SKAction.wait(forDuration: 1.0)
+        let sequence = SKAction.sequence([spawnEnemy, wait])
+        let constantEnemies = SKAction.repeatForever(sequence)
+        self.run(constantEnemies)
+        
+    }
+    
+    fileprivate func spawnEnemy() {
+        let newEnemy = SKSpriteNode()
+        let randEnemySpawn = arc4random_uniform(300) + 1
+        newEnemy.size = enemySize
+        newEnemy.position.y = 800
+        newEnemy.color = .cyan
+        
+        let randomQuad = CGFloat(arc4random_uniform(2))
+        if randomQuad == 0 {
+            newEnemy.position.x = -CGFloat(randEnemySpawn)
+        } else {
+            newEnemy.position.x = CGFloat(randEnemySpawn)
+        }
+        
+        self.addChild(newEnemy)
+        let moveEnemy = SKAction.moveTo(y: -700, duration: 1.5)
+        newEnemy.run(moveEnemy)
+        
+    }
+
 }

@@ -8,6 +8,7 @@
 
 import SpriteKit
 import GameplayKit
+import  UIKit
 
 class StartScreen: SKScene {
     
@@ -44,9 +45,12 @@ class StartScreen: SKScene {
         self.addChild(self.titleLabel!)
         //self.addChild(self.startLabel!)
         self.addChild(self.highScore!)
+        
+        
+        
     }
     
-    
+    var shooterSlider = UISlider(frame:CGRect(x: 20, y: 260, width: 280, height: 20))
     
     
     

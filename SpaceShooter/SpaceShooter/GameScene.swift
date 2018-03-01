@@ -9,23 +9,22 @@
 import SpriteKit
 import GameplayKit
 
-var playerNode = SKSpriteNode()
+var playerNode = SKSpriteNode(imageNamed: "download2.png")
 var projectile = SKSpriteNode()
-var enemy = SKSpriteNode()
+var enemy = SKSpriteNode(imageNamed: "blueSpae.png")
 var playerSize = CGSize(width: 70, height: 70)
 var playerPostition = CGPoint(x: 0, y: -580)
 
-var projectileVelocity = CGFloat()
 var projectileSize = CGSize(width: 10, height: 10)
 
 var enemyNode = SKSpriteNode() //repeating perhaps
 var enemySize = CGSize(width: 70, height: 70)
-var enemyVelocity = CGFloat()
-var enemyPosistion = CGPoint()
 
 var starSize = CGSize()
 var starVelocity = 0.1
 
+var scoreLabel = SKLabelNode()
+var score = 0
 enum physicCategories {
     static let playerTag: UInt32 = 0
     static let projectileTag: UInt32 = 1
@@ -36,9 +35,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     override func didMove(to view: SKView) {
         self.physicsWorld.contactDelegate = self
+        scoreLabel.fontName = "Avenir Next"
+        scoreLabel.text = "0"
+        
+        
         playerNode.size = playerSize
         playerNode.position = playerPostition
-        playerNode.color = .orange
         self.addChild(playerNode)
         fireProjectiles()
         launchEnemy()
@@ -95,8 +97,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             self.spawnStars()
         }
         
-        let wait = SKAction.wait(forDuration: 0.01)
-        let sequence = SKAction.sequence([spawnStar, wait, spawnStar, wait, spawnStar, wait])
+        let wait = SKAction.wait(forDuration: 0.03)
+        let sequence = SKAction.sequence([wait, spawnStar])
         let starRepeat = SKAction.repeatForever(sequence)
         self.run(starRepeat)
     }
@@ -107,6 +109,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         star.color = UIColor(red: 254/255, green: 1, blue: 166/255, alpha: 1)
         star.size = CGSize(width: randomSize, height: randomSize)
         star.position.y = 700
+        star.zPosition = -1
         var starXPosition: CGFloat = 0.0
         let randomQuadrant = CGFloat(arc4random_uniform(2))
         let randomXPosition = CGFloat(arc4random_uniform(365))
@@ -132,14 +135,36 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let secondBody = contact.bodyB
         print("something")
         if ((firstBody.categoryBitMask == physicCategories.enemyTag) && (secondBody.categoryBitMask == physicCategories.projectileTag)) || (firstBody.categoryBitMask == physicCategories.projectileTag) && (secondBody.categoryBitMask == physicCategories.enemyTag){
-
+            spawnExplosion(enemyTemp: secondBody.node as! SKSpriteNode)
+            firstBody.node?.removeFromParent()
+            secondBody.node?.removeFromParent()
         }
     }
+    
+    fileprivate func spawnExplosion(enemyTemp: SKSpriteNode) {
+        let explosionEmmiterPath = Bundle.main.path(forResource: "smoke", ofType: "sks")
+        let explosion = NSKeyedUnarchiver.unarchiveObject(withFile: explosionEmmiterPath! as String) as! SKEmitterNode
+        
+        explosion.position = CGPoint(x: enemyTemp.position.x, y: enemyTemp.position.y)
+        explosion.zPosition = 1
+        explosion.targetNode = self
+        self.addChild(explosion)
+        
+        let wait = SKAction.wait(forDuration: 0.5)
+        let removeExplosion = SKAction.run {
+            explosion.removeFromParent()
+        }
+        
+        self.run(SKAction.sequence([wait,removeExplosion]))
+        
+    }
+    
     
     override func update(_ currentTime: TimeInterval) {
         //Check for projectile and enemy collision
 
     }
+    
     
     // Enemy
     fileprivate func launchEnemy() {
@@ -155,7 +180,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     fileprivate func spawnEnemy() {
-        enemy = SKSpriteNode(color: .cyan, size: enemySize)
+        enemy = SKSpriteNode(imageNamed: "red.png")
+        enemy.size = enemySize
         let randEnemySpawn = arc4random_uniform(300) + 1
         enemy.position.y = 900
         let randomQuad = CGFloat(arc4random_uniform(2))
@@ -167,7 +193,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         enemy.physicsBody = SKPhysicsBody(rectangleOf: enemySize)
         enemy.physicsBody?.allowsRotation = false
-        enemy.physicsBody?.isDynamic = false
         enemy.physicsBody?.affectedByGravity = false
         enemy.physicsBody?.categoryBitMask = physicCategories.enemyTag
         enemy.physicsBody?.contactTestBitMask = physicCategories.projectileTag

@@ -10,6 +10,8 @@ import SpriteKit
 import GameplayKit
 
 var playerNode = SKSpriteNode()
+var projectile = SKSpriteNode()
+var enemy = SKSpriteNode()
 var playerSize = CGSize(width: 70, height: 70)
 var playerPostition = CGPoint(x: 0, y: -580)
 
@@ -24,15 +26,18 @@ var enemyPosistion = CGPoint()
 var starSize = CGSize()
 var starVelocity = 0.1
 
+var physicsWorld = SKPhysicsWorld()
+
 enum physicCategories {
     static let playerTag: UInt32 = 0
     static let projectileTag: UInt32 = 1
     static let enemyTag: UInt32 = 2
 }
 
-class GameScene: SKScene {
+class GameScene: SKScene, SKPhysicsContactDelegate {
     
     override func didMove(to view: SKView) {
+        physicsWorld.contactDelegate = self
         playerNode.size = playerSize
         playerNode.position = playerPostition
         playerNode.color = .orange
@@ -71,15 +76,20 @@ class GameScene: SKScene {
     }
     
     fileprivate func spawnProjectile() {
-        let projectileNode = SKSpriteNode()
-        projectileNode.size = projectileSize
-        projectileNode.position = CGPoint(x: playerNode.position.x, y: playerNode.position.y + 40)
-        projectileNode.color = .white
-        self.addChild(projectileNode)
+        projectile = SKSpriteNode(color: .white, size: projectileSize)
+        projectile.position = CGPoint(x: playerNode.position.x, y: playerNode.position.y + 40)
+        self.addChild(projectile)
         
+        projectile.physicsBody = SKPhysicsBody(rectangleOf: projectileSize)
+        projectile.physicsBody?.affectedByGravity = false
+        projectile.physicsBody?.allowsRotation = false
+        projectile.physicsBody?.isDynamic = false
+        projectile.physicsBody?.categoryBitMask = physicCategories.projectileTag
+        projectile.physicsBody?.contactTestBitMask = physicCategories.enemyTag
+        projectile.name = "projectileName"
         let moveProjectile = SKAction.moveTo(y: 700, duration: 0.8)
         let destroy = SKAction.removeFromParent()
-        projectileNode.run(SKAction.sequence([moveProjectile, destroy]))
+        projectile.run(SKAction.sequence([moveProjectile, destroy]))
     }
     
     fileprivate func moveStars() {
@@ -119,9 +129,17 @@ class GameScene: SKScene {
 
     }
     
+    func didBegin(_ contact: SKPhysicsContact) {
+        print("Something")
+        if (contact.bodyA.categoryBitMask == physicCategories.projectileTag && contact.bodyB.categoryBitMask == physicCategories.enemyTag) ||  (contact.bodyA.categoryBitMask == physicCategories.enemyTag && contact.bodyB.categoryBitMask == physicCategories.projectileTag){
+            print("Projectile Hit Enemy")
+        }
+    }
+    
     
     override func update(_ currentTime: TimeInterval) {
-        // Called before each frame is rendered
+        //Check for projectile and enemy collision
+
     }
     
     // Enemy
@@ -138,24 +156,28 @@ class GameScene: SKScene {
     }
     
     fileprivate func spawnEnemy() {
-        let newEnemy = SKSpriteNode()
+        enemy = SKSpriteNode(color: .cyan, size: enemySize)
         let randEnemySpawn = arc4random_uniform(300) + 1
-        newEnemy.size = enemySize
-        newEnemy.position.y = 900
-        newEnemy.color = .cyan
-        
+        enemy.position.y = 900
         let randomQuad = CGFloat(arc4random_uniform(2))
         if randomQuad == 0 {
-            newEnemy.position.x = -CGFloat(randEnemySpawn)
+            enemy.position.x = -CGFloat(randEnemySpawn)
         } else {
-            newEnemy.position.x = CGFloat(randEnemySpawn)
+            enemy.position.x = CGFloat(randEnemySpawn)
         }
         
-        self.addChild(newEnemy)
+        self.addChild(enemy)
+        
+        enemy.physicsBody = SKPhysicsBody()
+        enemy.physicsBody?.allowsRotation = false
+        enemy.physicsBody?.isDynamic = false
+        enemy.physicsBody?.affectedByGravity = false
+        enemy.physicsBody?.categoryBitMask = physicCategories.enemyTag
+        
         let moveEnemy = SKAction.moveTo(y: -700, duration: 1.5)
         let destroy = SKAction.removeFromParent()
         let sequence = SKAction.sequence([moveEnemy, destroy])
-        newEnemy.run(sequence)
+        enemy.run(sequence)
         
     }
 

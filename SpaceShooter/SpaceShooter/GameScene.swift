@@ -25,6 +25,9 @@ var starVelocity = 0.1
 
 var scoreLabel = SKLabelNode()
 var score = 0
+
+var isAlive = true
+
 enum physicCategories {
     static let playerTag: UInt32 = 0
     static let projectileTag: UInt32 = 1
@@ -36,11 +39,21 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     override func didMove(to view: SKView) {
         self.physicsWorld.contactDelegate = self
         scoreLabel.fontName = "Avenir Next"
-        scoreLabel.text = "0"
-        
+        scoreLabel.text = "Score: 0"
+        scoreLabel.fontSize = 50
+        scoreLabel.position = CGPoint(x: 0, y: 580)
+        self.addChild(scoreLabel)
         
         playerNode.size = playerSize
         playerNode.position = playerPostition
+        playerNode.physicsBody = SKPhysicsBody(rectangleOf: playerSize)
+        playerNode.physicsBody?.affectedByGravity = false
+        playerNode.physicsBody?.allowsRotation = false
+        playerNode.physicsBody?.isDynamic = false
+        playerNode.physicsBody?.categoryBitMask = physicCategories.playerTag
+        playerNode.physicsBody?.contactTestBitMask = physicCategories.enemyTag
+        playerNode.name = "playerName"
+        
         self.addChild(playerNode)
         fireProjectiles()
         launchEnemy()
@@ -138,6 +151,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             spawnExplosion(enemyTemp: secondBody.node as! SKSpriteNode)
             firstBody.node?.removeFromParent()
             secondBody.node?.removeFromParent()
+            score += 1
+        }
+        
+        if ((firstBody.categoryBitMask == physicCategories.enemyTag) && (secondBody.categoryBitMask == physicCategories.playerTag)) || (firstBody.categoryBitMask == physicCategories.playerTag) && (secondBody.categoryBitMask == physicCategories.enemyTag){
+            
+            isAlive = false
+            
         }
     }
     
@@ -162,7 +182,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     override func update(_ currentTime: TimeInterval) {
         //Check for projectile and enemy collision
-
+        scoreLabel.text = "Score: \(score)"
+        
+        if isAlive == false {
+            score = 0
+            isAlive = true
+        }
+        
     }
     
     

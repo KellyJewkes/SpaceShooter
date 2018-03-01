@@ -21,6 +21,11 @@ var enemySize = CGSize(width: 50, height: 50)
 var enemyVelocity = CGFloat()
 var enemyPosistion = CGPoint()
 
+var starSize = CGSize()
+var starVelocity = 0.1
+
+
+
 class GameScene: SKScene {
     
     override func didMove(to view: SKView) {
@@ -29,12 +34,13 @@ class GameScene: SKScene {
         playerNode.color = .orange
         self.addChild(playerNode)
         fireProjectiles()
+        moveStars()
     }
 
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         for touch in touches {
-            print(touch.location(in: self).y)
+            print(touch.location(in: self).x)
             playerNode.position.x = touch.location(in: self).x
         }
     }
@@ -50,22 +56,64 @@ class GameScene: SKScene {
             self.spawnProjectile()
         }
         
-        let wait = SKAction.wait(forDuration: 0.5)
+        let wait = SKAction.wait(forDuration: 0.3)
+
         let sequence = SKAction.sequence([spawnProjectile, wait])
         let fire = SKAction.repeatForever(sequence)
+        
         playerNode.run(fire)
 
     }
-
+    
     fileprivate func spawnProjectile() {
         let projectileNode = SKSpriteNode()
         projectileNode.size = projectileSize
         projectileNode.position = CGPoint(x: playerNode.position.x, y: playerNode.position.y + 40)
         projectileNode.color = .white
         self.addChild(projectileNode)
+        
         let moveProjectile = SKAction.moveTo(y: 700, duration: 0.8)
-        projectileNode.run(moveProjectile)
+        let destroy = SKAction.removeFromParent()
+        projectileNode.run(SKAction.sequence([moveProjectile, destroy]))
     }
+    
+    fileprivate func moveStars() {
+        let spawnStar = SKAction.run {
+            self.spawnStars()
+        }
+        
+        let wait = SKAction.wait(forDuration: 0.01)
+        let sequence = SKAction.sequence([spawnStar, wait, spawnStar, wait, spawnStar, wait])
+        let starRepeat = SKAction.repeatForever(sequence)
+        self.run(starRepeat)
+    }
+    
+    fileprivate func spawnStars() {
+        let randomSize = CGFloat(arc4random_uniform(6) + 2)
+        let star = SKSpriteNode()
+        star.color = UIColor(red: 254/255, green: 1, blue: 166/255, alpha: 1)
+        star.size = CGSize(width: randomSize, height: randomSize)
+        star.position.y = 700
+        var starXPosition: CGFloat = 0.0
+        let randomQuadrant = CGFloat(arc4random_uniform(2))
+        let randomXPosition = CGFloat(arc4random_uniform(365))
+        
+        if randomQuadrant == 0 {
+            starXPosition = -randomXPosition
+        } else {
+            starXPosition = randomXPosition
+        }
+        
+        star.position.x = starXPosition
+        self.addChild(star)
+        
+        let move = SKAction.moveTo(y: -700, duration: 0.8)
+        let destory = SKAction.removeFromParent()
+        let sequence = SKAction.sequence([move, destory])
+        star.run(sequence)
+
+    }
+    
     
     override func update(_ currentTime: TimeInterval) {
         // Called before each frame is rendered

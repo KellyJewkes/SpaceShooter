@@ -173,6 +173,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         enemy.physicsBody?.isDynamic = false
         enemy.physicsBody?.affectedByGravity = false
         enemy.physicsBody?.categoryBitMask = physicCategories.enemyTag
+        enemy.name = "enemyName"
         
         let moveEnemy = SKAction.moveTo(y: -700, duration: 1.5)
         let destroy = SKAction.removeFromParent()

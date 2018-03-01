@@ -17,14 +17,18 @@ var projectileVelocity = CGFloat()
 var projectileSize = CGSize(width: 10, height: 10)
 
 var enemyNode = SKSpriteNode() //repeating perhaps
-var enemySize = CGSize(width: 50, height: 50)
+var enemySize = CGSize(width: 70, height: 70)
 var enemyVelocity = CGFloat()
 var enemyPosistion = CGPoint()
 
 var starSize = CGSize()
 var starVelocity = 0.1
 
-
+enum physicCategories {
+    static let playerTag: UInt32 = 0
+    static let projectileTag: UInt32 = 1
+    static let enemyTag: UInt32 = 2
+}
 
 class GameScene: SKScene {
     
@@ -137,7 +141,7 @@ class GameScene: SKScene {
         let newEnemy = SKSpriteNode()
         let randEnemySpawn = arc4random_uniform(300) + 1
         newEnemy.size = enemySize
-        newEnemy.position.y = 800
+        newEnemy.position.y = 900
         newEnemy.color = .cyan
         
         let randomQuad = CGFloat(arc4random_uniform(2))
@@ -149,7 +153,9 @@ class GameScene: SKScene {
         
         self.addChild(newEnemy)
         let moveEnemy = SKAction.moveTo(y: -700, duration: 1.5)
-        newEnemy.run(moveEnemy)
+        let destroy = SKAction.removeFromParent()
+        let sequence = SKAction.sequence([moveEnemy, destroy])
+        newEnemy.run(sequence)
         
     }
 

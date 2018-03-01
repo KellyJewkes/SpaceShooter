@@ -9,9 +9,9 @@
 import SpriteKit
 import GameplayKit
 
-var playerNode = SKSpriteNode(imageNamed: "download2.png")
+var playerNode = SKSpriteNode()
 var projectile = SKSpriteNode()
-var enemy = SKSpriteNode(imageNamed: "blueSpae.png")
+var enemy = SKSpriteNode()
 var playerSize = CGSize(width: 70, height: 70)
 var playerPostition = CGPoint(x: 0, y: -580)
 
@@ -19,6 +19,7 @@ var projectileSize = CGSize(width: 10, height: 10)
 
 var enemyNode = SKSpriteNode() //repeating perhaps
 var enemySize = CGSize(width: 70, height: 70)
+var enemyVelocity: Double = 1.0
 
 var starSize = CGSize()
 var starVelocity = 0.1
@@ -37,13 +38,27 @@ enum physicCategories {
 class GameScene: SKScene, SKPhysicsContactDelegate {
     
     override func didMove(to view: SKView) {
+        super.didMove(to: view)
+        
         self.physicsWorld.contactDelegate = self
+        setupLabel()
+        setupPlayer()
+        fireProjectiles()
+        launchEnemy()
+        moveStars()
+    }
+    
+    fileprivate func setupLabel() {
+        scoreLabel = SKLabelNode()
         scoreLabel.fontName = "Avenir Next"
         scoreLabel.text = "Score: 0"
         scoreLabel.fontSize = 50
         scoreLabel.position = CGPoint(x: 0, y: 580)
         self.addChild(scoreLabel)
-        
+    }
+    
+    fileprivate func setupPlayer() {
+        playerNode = SKSpriteNode(imageNamed: "download2.png")
         playerNode.size = playerSize
         playerNode.position = playerPostition
         playerNode.physicsBody = SKPhysicsBody(rectangleOf: playerSize)
@@ -53,11 +68,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         playerNode.physicsBody?.categoryBitMask = physicCategories.playerTag
         playerNode.physicsBody?.contactTestBitMask = physicCategories.enemyTag
         playerNode.name = "playerName"
-        
         self.addChild(playerNode)
-        fireProjectiles()
-        launchEnemy()
-        moveStars()
     }
 
     
@@ -146,7 +157,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     func didBegin(_ contact: SKPhysicsContact) {
         let firstBody = contact.bodyA
         let secondBody = contact.bodyB
-        print("something")
         if ((firstBody.categoryBitMask == physicCategories.enemyTag) && (secondBody.categoryBitMask == physicCategories.projectileTag)) || (firstBody.categoryBitMask == physicCategories.projectileTag) && (secondBody.categoryBitMask == physicCategories.enemyTag){
             spawnExplosion(enemyTemp: secondBody.node as! SKSpriteNode)
             firstBody.node?.removeFromParent()
@@ -185,12 +195,24 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         scoreLabel.text = "Score: \(score)"
         
         if isAlive == false {
-            score = 0
-            isAlive = true
+            self.resetTheGame()
         }
         
     }
     
+    func resetTheGame(){
+        self.view?.presentScene(TitleScene(), transition: SKTransition.doorway(withDuration: 0.5))
+        
+        btnPlay.removeFromSuperview()
+        gameTitle.removeFromSuperview()
+        slider.removeFromSuperview()
+        
+        if let scene = TitleScene(fileNamed: "TitleScene"){
+            let skview = self.view! as SKView
+            scene.scaleMode = .aspectFill
+            skview.presentScene(scene)
+        }
+    }
     
     // Enemy
     fileprivate func launchEnemy() {
@@ -198,7 +220,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             self.spawnEnemy()
         }
     
-        let wait = SKAction.wait(forDuration: 1.0)
+        let wait = SKAction.wait(forDuration: enemyVelocity)
         let sequence = SKAction.sequence([spawnEnemy, wait])
         let constantEnemies = SKAction.repeatForever(sequence)
         self.run(constantEnemies)

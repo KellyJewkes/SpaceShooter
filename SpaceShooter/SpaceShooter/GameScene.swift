@@ -26,8 +26,6 @@ var enemyPosistion = CGPoint()
 var starSize = CGSize()
 var starVelocity = 0.1
 
-var physicsWorld = SKPhysicsWorld()
-
 enum physicCategories {
     static let playerTag: UInt32 = 0
     static let projectileTag: UInt32 = 1
@@ -37,7 +35,7 @@ enum physicCategories {
 class GameScene: SKScene, SKPhysicsContactDelegate {
     
     override func didMove(to view: SKView) {
-        physicsWorld.contactDelegate = self
+        self.physicsWorld.contactDelegate = self
         playerNode.size = playerSize
         playerNode.position = playerPostition
         playerNode.color = .orange
@@ -50,7 +48,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         for touch in touches {
-            print(touch.location(in: self).x)
             playerNode.position.x = touch.location(in: self).x
         }
     }
@@ -78,7 +75,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     fileprivate func spawnProjectile() {
         projectile = SKSpriteNode(color: .white, size: projectileSize)
         projectile.position = CGPoint(x: playerNode.position.x, y: playerNode.position.y + 40)
-        self.addChild(projectile)
         
         projectile.physicsBody = SKPhysicsBody(rectangleOf: projectileSize)
         projectile.physicsBody?.affectedByGravity = false
@@ -90,6 +86,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let moveProjectile = SKAction.moveTo(y: 700, duration: 0.8)
         let destroy = SKAction.removeFromParent()
         projectile.run(SKAction.sequence([moveProjectile, destroy]))
+        self.addChild(projectile)
+
     }
     
     fileprivate func moveStars() {
@@ -130,12 +128,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     func didBegin(_ contact: SKPhysicsContact) {
-        print("Something")
-        if (contact.bodyA.categoryBitMask == physicCategories.projectileTag && contact.bodyB.categoryBitMask == physicCategories.enemyTag) ||  (contact.bodyA.categoryBitMask == physicCategories.enemyTag && contact.bodyB.categoryBitMask == physicCategories.projectileTag){
-            print("Projectile Hit Enemy")
+        let firstBody = contact.bodyA
+        let secondBody = contact.bodyB
+        print("something")
+        if ((firstBody.categoryBitMask == physicCategories.enemyTag) && (secondBody.categoryBitMask == physicCategories.projectileTag)) || (firstBody.categoryBitMask == physicCategories.projectileTag) && (secondBody.categoryBitMask == physicCategories.enemyTag){
+
         }
     }
-    
     
     override func update(_ currentTime: TimeInterval) {
         //Check for projectile and enemy collision
@@ -166,19 +165,20 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             enemy.position.x = CGFloat(randEnemySpawn)
         }
         
-        self.addChild(enemy)
-        
-        enemy.physicsBody = SKPhysicsBody()
+        enemy.physicsBody = SKPhysicsBody(rectangleOf: enemySize)
         enemy.physicsBody?.allowsRotation = false
         enemy.physicsBody?.isDynamic = false
         enemy.physicsBody?.affectedByGravity = false
         enemy.physicsBody?.categoryBitMask = physicCategories.enemyTag
+        enemy.physicsBody?.contactTestBitMask = physicCategories.projectileTag
         enemy.name = "enemyName"
         
         let moveEnemy = SKAction.moveTo(y: -700, duration: 1.5)
         let destroy = SKAction.removeFromParent()
         let sequence = SKAction.sequence([moveEnemy, destroy])
         enemy.run(sequence)
+        
+        self.addChild(enemy)
         
     }
 
